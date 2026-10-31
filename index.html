@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Algebra Tank</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+
+/* Layout: a TV-studio stage. Pitch deck monitor on the left, the Shark's decision panel on the right, a gold chyron across the top. */
+:root {
+  --abyss: #06121c;
+  --deep: #0a1f30;
+  --panel: #0f2a3f;
+  --panel2: #153954;
+  --line: #24506f;
+  --ink: #eaf3f8;
+  --mute: #93b3c7;
+  --gold: #f2b84b;
+  --gold-ink: #231600;
+  --aqua: #46d2d8;
+  --coral: #ff6f61;
+  --good: #52e08a;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -8%, rgba(70, 210, 216, .20), transparent 62%),
+    radial-gradient(700px 380px at 90% 6%, rgba(242, 184, 75, .12), transparent 60%),
+    var(--abyss);
+  background-attachment: fixed;
+  color: var(--ink);
+  font: 16px/1.5 var(--body);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--abyss); }
+.app { max-width: 1120px; margin: 0 auto; padding-block: 0 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+.mono { font-family: var(--mono); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+
+/* HUD */
+.hud { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; padding: 10px 0; background: linear-gradient(var(--abyss) 78%, rgba(6, 18, 28, 0)); }
+body[data-phase="title"] .hud { display: none; }
+.brand { font: 900 24px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.brand b { color: var(--gold); font-weight: 900; }
+.stats { display: flex; gap: 6px 22px; flex-wrap: wrap; }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat span { font: 500 11px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.stat strong { font: 800 24px/1.1 var(--display); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.stat.money strong { color: var(--gold); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); font-weight: 700; cursor: pointer; transition: transform .08s, filter .15s; text-align: center; }
+.btn:hover:not(:disabled) { filter: brightness(1.15); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.gold { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.btn.green { background: var(--good); border-color: var(--good); color: #04210f; }
+.btn.coral { background: transparent; border-color: var(--coral); color: var(--coral); }
+.btn.ghost { background: transparent; }
+.btn.big { min-height: 54px; font-size: 18px; padding-inline: 28px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.row > .btn { flex: 1 1 150px; }
+
+/* Title */
+.title { padding-block: 56px 24px; display: grid; gap: 28px; }
+.title .kicker { font: 500 13px var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--aqua); }
+.title h1 { font: 900 clamp(64px, 15vw, 150px)/.85 var(--display); letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+.title h1 em { font-style: normal; color: var(--gold); }
+.title .lede { max-width: 56ch; font-size: 19px; color: #c6dbe7; }
+.fin-wrap { position: relative; height: 70px; overflow: hidden; border-bottom: 2px solid var(--line); }
+.fin { position: absolute; bottom: -2px; left: 0; width: 84px; animation: swim 14s linear infinite; }
+.fin path { fill: var(--panel2); stroke: var(--aqua); stroke-width: 2; }
+@keyframes swim { from { transform: translateX(-100px); } to { transform: translateX(calc(100vw)); } }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+.steps li { padding: 16px 16px 16px 0; display: grid; gap: 4px; }
+.steps li + li { padding-left: 16px; border-left: 1px solid var(--line); }
+.steps .n { font: 800 34px/1 var(--display); color: var(--gold); }
+.steps b { font-size: 17px; }
+.steps span { color: var(--mute); font-size: 14px; }
+.best { font: 500 13px var(--mono); color: var(--mute); }
+
+/* Chyron */
+.chyron { display: flex; flex-wrap: wrap; align-items: stretch; margin-bottom: 16px; font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; }
+.chyron > span { padding: 7px 18px; display: flex; align-items: center; min-width: 0; }
+.chy-name { background: var(--gold); color: var(--gold-ink); font-weight: 900; font-size: 24px; clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%); padding-right: 30px !important; }
+.chy-co { background: #0c3a57; font-weight: 700; font-size: 22px; margin-left: -10px; padding-left: 26px !important; border: 1px solid var(--line); border-left: 0; }
+.chy-ask { color: var(--gold); font-weight: 800; font-size: 22px; background: var(--deep); border: 1px solid var(--line); border-left: 0; font-variant-numeric: tabular-nums; }
+
+/* Stage */
+.play { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 880px) {
+  .play { grid-template-columns: minmax(0, 1fr); }
+  body:not([data-phase="pitch"]) .panel-col { order: -1; }
+}
+.deck-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.deck-tabs button { flex: 1; background: var(--deep); border: 1px solid var(--line); border-radius: 6px 6px 0 0; padding: 7px 8px; cursor: pointer; font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.deck-tabs button[aria-selected="true"] { background: var(--panel2); color: var(--gold); border-color: var(--gold); }
+.deck { position: relative; background: linear-gradient(160deg, #0f3b5c, #0a2438 62%); border: 1px solid #347aa0; border-radius: 6px; box-shadow: 0 0 0 6px #08141f, 0 0 0 7px var(--line), 0 24px 60px rgba(0, 0, 0, .5); padding: 26px 26px 22px; min-height: 410px; display: flex; flex-direction: column; gap: 14px; animation: slidein .35s ease; }
+@keyframes slidein { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.deck .kick { font: 600 11px var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--aqua); }
+.deck h2 { font: 900 clamp(32px, 5vw, 46px)/.95 var(--display); text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+.deck .tag { color: #cfe3ee; font-size: 17px; max-width: 46ch; }
+.deck h3 { font: 700 15px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 2px; }
+.deck .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+.deck .two p { font-size: 15px; color: #d6e7f1; }
+.econ { margin-top: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); border: 1px solid var(--line); border-radius: 6px; background: rgba(6, 18, 28, .45); }
+.econ > div { padding: 10px 14px; display: grid; gap: 2px; }
+.econ > div + div { border-left: 1px solid var(--line); }
+.econ span { font: 500 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.econ strong { font: 800 26px/1.05 var(--display); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.chart-row { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
+@media (max-width: 560px) { .chart-row { grid-template-columns: minmax(0, 1fr); } }
+.chart { width: 100%; height: auto; display: block; }
+.chart .bar { fill: var(--aqua); opacity: .8; }
+.chart .bar.last { fill: var(--gold); opacity: 1; }
+.chart text { fill: var(--ink); font: 600 12px var(--mono); }
+.chart .axis { stroke: var(--line); stroke-width: 1; }
+.ledger { display: grid; gap: 0; font-variant-numeric: tabular-nums; }
+.ledger > div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 15px; }
+.ledger span { color: var(--mute); }
+.ledger b { font-family: var(--mono); font-weight: 600; }
+.multiple { border-left: 3px solid var(--gold); padding: 8px 12px; background: rgba(242, 184, 75, .09); font-size: 15px; }
+.bigask { font: 900 clamp(40px, 7vw, 68px)/.95 var(--display); text-transform: uppercase; color: var(--gold); font-variant-numeric: tabular-nums; }
+.bigask small { display: block; font: 600 12px var(--mono); letter-spacing: .2em; color: var(--aqua); margin-bottom: 6px; }
+.funds { display: grid; gap: 8px; }
+.fund { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14.5px; }
+.fund i { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: rgba(147, 179, 199, .2); overflow: hidden; }
+.fund i::after { content: ""; display: block; height: 100%; width: var(--w); background: var(--aqua); }
+.fund b { font-family: var(--mono); font-weight: 600; }
+.deck-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+.deck-foot .btn { min-height: 38px; padding: 6px 14px; }
+
+/* Panels */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 22px; display: grid; gap: 16px; }
+.eyebrow { font: 600 11.5px var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--aqua); }
+.ptitle { font: 800 30px/1 var(--display); text-transform: uppercase; letter-spacing: .03em; }
+.qtext { font-size: 17px; }
+.setup { background: var(--abyss); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font-size: 15px; line-height: 1.8; color: var(--gold); overflow-x: auto; }
+.ans { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 8px; background: var(--abyss); overflow: hidden; }
+.ans:focus-within { border-color: var(--aqua); box-shadow: 0 0 0 3px rgba(70, 210, 216, .2); }
+.ans input { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--ink); font: 600 24px var(--mono); padding: 12px 10px; outline: none; }
+.ans .pre, .ans .post { display: flex; align-items: center; padding: 0 12px; color: var(--mute); font: 600 15px var(--mono); }
+.msg { padding: 10px 14px; border-radius: 6px; font-size: 15px; border: 1px solid; }
+.msg.bad { border-color: var(--coral); background: rgba(255, 111, 97, .1); }
+.msg.good { border-color: var(--good); background: rgba(82, 224, 138, .1); }
+.msg.info { border-color: var(--gold); background: rgba(242, 184, 75, .1); }
+.steps-list { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15px; }
+.steps-list li::marker { color: var(--gold); font-family: var(--mono); }
+.intel { display: grid; gap: 2px; border: 1px dashed var(--aqua); border-radius: 8px; padding: 12px 14px; background: rgba(70, 210, 216, .08); }
+.intel b { font: 800 18px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--aqua); }
+.who { display: flex; gap: 14px; align-items: center; }
+.who svg { flex: none; }
+.who b { display: block; font-size: 18px; }
+.who span { color: var(--mute); font-size: 14px; }
+.speech { position: relative; background: var(--panel2); border-radius: 10px; padding: 16px 18px; font-size: 17px; line-height: 1.5; border: 1px solid var(--line); }
+.speech::before { content: ""; position: absolute; top: -8px; left: 28px; width: 14px; height: 14px; background: var(--panel2); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
+.offer { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--gold); border-radius: 8px; background: rgba(242, 184, 75, .08); }
+.offer span { font: 600 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.offer strong { font: 900 40px/1 var(--display); color: var(--gold); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.offer em { font-style: normal; color: var(--mute); font-size: 14px; }
+.tip { font-size: 14px; color: var(--mute); }
+.tip b { color: var(--ink); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { padding: 11px; background: var(--deep); border: 0; font-weight: 700; cursor: pointer; color: var(--mute); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
+.stepper { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; align-items: stretch; }
+.stepper .btn { min-height: 56px; font-size: 28px; padding: 0; }
+.stepper .ans input { text-align: center; font-size: 28px; }
+.rule { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+/* Full-width cards */
+.center { max-width: 760px; margin: 24px auto 0; display: grid; gap: 22px; }
+.nextup { padding-block: 40px; text-align: left; }
+.nextup h2 { font: 900 clamp(46px, 9vw, 92px)/.9 var(--display); text-transform: uppercase; letter-spacing: .01em; }
+.stamp { display: inline-block; align-self: start; font: 900 clamp(60px, 14vw, 120px)/.9 var(--display); text-transform: uppercase; letter-spacing: .04em; padding: 0 22px; border: 6px solid currentColor; border-radius: 10px; transform: rotate(-4deg); animation: thud .4s cubic-bezier(.2, 1.6, .4, 1); }
+.stamp.deal { color: var(--good); }
+.stamp.pass { color: var(--coral); }
+@keyframes thud { from { transform: rotate(-4deg) scale(2.2); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 1; } }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.facts > div { padding: 14px 16px; display: grid; gap: 2px; }
+.facts > div + div { border-left: 1px solid var(--line); }
+.facts span { font: 500 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.facts strong { font: 800 28px/1.05 var(--display); letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+
+/* Finale */
+.finale { display: grid; gap: 28px; padding-block: 24px; }
+.finale h2 { font: 900 clamp(48px, 10vw, 104px)/.88 var(--display); text-transform: uppercase; }
+.finale h2 em { font-style: normal; color: var(--gold); }
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14.5px; vertical-align: top; }
+th { font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+.up { color: var(--good); } .down { color: var(--coral); }
+.pill { display: inline-block; padding: 1px 9px; border-radius: 99px; font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); color: var(--mute); white-space: nowrap; }
+.pill.good { color: var(--good); border-color: var(--good); } .pill.bad { color: var(--coral); border-color: var(--coral); } .pill.mid { color: var(--gold); border-color: var(--gold); }
+.log { display: grid; gap: 6px; }
+.log div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font-size: 14.5px; flex-wrap: wrap; }
+h3.sect { font: 800 26px/1 var(--display); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+
+/* Toolkit */
+.tk-btn { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; box-shadow: 0 8px 30px rgba(0, 0, 0, .5); }
+.tk { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(72px + env(safe-area-inset-bottom, 0px)); z-index: 40; width: min(340px, calc(100vw - 32px)); max-height: 70vh; overflow: auto; background: var(--deep); border: 1px solid var(--gold); border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+.tk-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+.tk-tabs button { padding: 10px; background: transparent; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; font: 600 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.tk-tabs button[aria-selected="true"] { color: var(--gold); border-bottom: 2px solid var(--gold); }
+.tk-body { padding: 14px; display: grid; gap: 12px; }
+.calc-out { font: 600 26px var(--mono); text-align: right; min-height: 36px; color: var(--gold); overflow-x: auto; white-space: nowrap; }
+.tk input { width: 100%; background: var(--abyss); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; color: var(--ink); font: 500 17px var(--mono); }
+.formula { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px dashed var(--line); }
+.formula:last-child { border: 0; }
+.formula b { font-size: 14px; }
+.formula code { font: 500 14px var(--mono); color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { .fin, .deck, .stamp { animation: none; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="hud" id="hud">
+    <div class="brand"><svg width="30" height="22" viewBox="0 0 84 60" aria-hidden="true"><path d="M2 58 C 30 52 40 22 50 2 C 54 26 68 46 82 58 Z" fill="#f2b84b"/></svg><span>Algebra <b>Tank</b></span></div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main id="screen"></main>
+</div>
+
+<button class="btn gold tk-btn" id="tk-btn" aria-expanded="false" aria-controls="tk">Toolkit</button>
+<aside class="tk" id="tk" hidden aria-label="Calculator and formulas">
+  <div class="tk-tabs" role="tablist">
+    <button role="tab" id="tab-calc" aria-selected="true" data-act="tkTab" data-tab="calc">Calculator</button>
+    <button role="tab" id="tab-form" aria-selected="false" data-act="tkTab" data-tab="form">Formulas</button>
+  </div>
+  <div class="tk-body" id="tk-calc">
+    <label class="sr" for="calc-in">Calculator input</label>
+    <input id="calc-in" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 150000 / 0.12" data-enter="calc">
+    <div class="calc-out" id="calc-out" aria-live="polite">0</div>
+    <p class="tip">Use + − × ÷ ^ ( ) and %. Press Enter to calculate.</p>
+  </div>
+  <div class="tk-body" id="tk-form" hidden>
+    <div class="formula"><b>Valuation (whole company)</b><code>cash = equity% × V &nbsp;→&nbsp; V = cash ÷ equity%</code></div>
+    <div class="formula"><b>Percent to decimal</b><code>12% = 0.12</code></div>
+    <div class="formula"><b>Profit</b><code>Profit = Revenue − Costs</code></div>
+    <div class="formula"><b>Break-even</b><code>Revenue = Costs</code></div>
+    <div class="formula"><b>Percent change</b><code>(new − old) ÷ old × 100</code></div>
+    <div class="formula"><b>Growth by r% each period</b><code>start × (1 + r)^t</code></div>
+    <div class="formula"><b>Line through two points</b><code>slope = (y₂ − y₁) ÷ (x₂ − x₁)</code></div>
+    <div class="formula"><b>Top of a parabola</b><code>y = ax² + bx + c → x = −b ÷ 2a</code></div>
+  </div>
+</aside>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- helpers ---------- */
+  const $id = (id) => document.getElementById(id);
+  const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const num = (n) => Math.round(n).toLocaleString('en-US');
+  const fmt = (n) => (Math.round(n) < 0 ? '−$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
+  const fmtK = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : '$' + Math.round(n / 1000) + 'K';
+  const dec = (e) => +(e / 100).toFixed(4);
+  const signed = (n) => (n >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
+  const BEST_KEY = 'algebra-tank-best';
+
+  function parseNum(str) {
+    let s = String(str).toLowerCase().replace(/[$,\s%]/g, '').replace(/[−–]/g, '-');
+    let mult = 1;
+    if (/(million|mil|m)$/.test(s)) { mult = 1e6; s = s.replace(/(million|mil|m)$/, ''); }
+    else if (/(thousand|k)$/.test(s)) { mult = 1e3; s = s.replace(/(thousand|k)$/, ''); }
+    if (s === '' || s === '-' || s === '.') return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n * mult : null;
+  }
+
+  function calc(src) {
+    const s = src.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/,/g, '');
+    let i = 0;
+    const ws = () => { while (s[i] === ' ') i++; };
+    const peek = () => { ws(); return s[i]; };
+    function expr() { let v = term(); for (;;) { const c = peek(); if (c === '+') { i++; v += term(); } else if (c === '-') { i++; v -= term(); } else return v; } }
+    function term() { let v = unary(); for (;;) { const c = peek(); if (c === '*') { i++; v *= unary(); } else if (c === '/') { i++; v /= unary(); } else return v; } }
+    function unary() { const c = peek(); if (c === '-') { i++; return -unary(); } if (c === '+') { i++; return unary(); } return pow(); }
+    function pow() { const b = postfix(); if (peek() === '^') { i++; return Math.pow(b, unary()); } return b; }
+    function postfix() { let v = atom(); while (peek() === '%') { i++; v /= 100; } return v; }
+    function atom() {
+      if (peek() === '(') { i++; const v = expr(); if (peek() !== ')') throw 0; i++; return v; }
+      const m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));
+      if (!m) throw 0;
+      i += m[0].length;
+      return parseFloat(m[0]);
+    }
+    try { const v = expr(); ws(); if (i < s.length) return null; return Number.isFinite(v) ? v : null; } catch (e) { return null; }
+  }
+
+  /* ---------- content ---------- */
+  const TPL = [
+    { company: 'Bean There', founder: 'Maya Okafor', tagline: 'Cafe-quality cold brew in a bottle that fits your fridge door.', problem: 'Cafe cold brew costs six dollars a cup and a trip across town.', solution: 'Our concentrate makes eight cups for the price of two.', pitch: 'We make cold-brew concentrate that turns any kitchen into a coffee shop.', unit: 'bottle', units: 'bottles', p: [12, 16], v: [5, 8], step: 1000, u: [15, 30], mult: 5, kind: 'craft beverage brands', basic: 'Original', deluxe: 'Nitro', hue: 28, funds: ['Buy more beans', 'Open a second roasting line', 'Run launch ads'] },
+    { company: 'PupPatch', founder: 'Dre Washington', tagline: 'A fresh box of toys for your dog, every month.', problem: 'Dogs wreck toys in a day and owners guess at what will last.', solution: 'We ship vet-tested chew toys, sized to your dog, on a schedule.', pitch: 'We ship monthly boxes of tough, vet-approved toys sized to each dog.', unit: 'box', units: 'boxes', p: [30, 40], v: [17, 24], step: 500, u: [8, 16], mult: 6, kind: 'subscription box companies', basic: 'Mini Box', deluxe: 'Mega Box', hue: 140, funds: ['Stock more toys', 'Hire a customer team', 'Pay for vet testing'] },
+    { company: 'GlowKicks', founder: 'Priya Raman', tagline: 'Sneakers that light the way home.', problem: 'Kids walk to the bus before sunrise and drivers cannot see them.', solution: 'A washable LED strip in the sole that charges in ten minutes.', pitch: 'We make light-up sneakers that kids love and parents trust.', unit: 'pair', units: 'pairs', p: [60, 80], v: [34, 45], step: 500, u: [6, 12], mult: 4, kind: 'footwear brands', basic: "Kids' pair", deluxe: 'Pro pair', hue: 200, funds: ['Order a bigger production run', 'Hire a designer', 'Get into stores'] },
+    { company: 'FitFuel Bars', founder: 'Tomás Rivera', tagline: 'Protein bars with three ingredients and no tricks.', problem: 'Most protein bars are candy bars in disguise.', solution: 'Three real ingredients, twenty grams of protein, nothing weird.', pitch: 'We make protein bars you can read the whole label of.', unit: 'box', units: 'boxes', p: [18, 24], v: [9, 13], step: 1000, u: [10, 20], mult: 5, kind: 'snack brands', basic: '6-bar box', deluxe: '12-bar box', hue: 8, funds: ['Buy ingredients in bulk', 'Upgrade the packing line', 'Pay for gym sponsorships'] },
+    { company: 'TidyTech', founder: 'Jun Park', tagline: 'A tiny robot that keeps your desk clean.', problem: 'Crumbs, dust and eraser shavings pile up every single day.', solution: 'A palm-size robot that sweeps your desk while you work.', pitch: 'We build a palm-size robot that sweeps your desk for you.', unit: 'robot', units: 'robots', p: [40, 60], v: [22, 30], step: 500, u: [8, 16], mult: 6, kind: 'consumer gadget companies', basic: 'Standard', deluxe: 'Turbo', hue: 265, funds: ['Pay the factory', 'Hire two engineers', 'Launch online ads'] },
+    { company: 'Bloom Box', founder: 'Aaliyah Brooks', tagline: 'Houseplants that do not die.', problem: 'Most people lose their first three plants within a month.', solution: 'A kit with the right pot, soil and a watering schedule sent by text.', pitch: 'We send everything a new plant owner needs to keep a plant alive.', unit: 'kit', units: 'kits', p: [28, 36], v: [14, 18], step: 500, u: [10, 20], mult: 5, kind: 'home and garden brands', basic: 'Starter kit', deluxe: 'Grower kit', hue: 120, funds: ['Buy plants and pots', 'Build the text-reminder app', 'Rent a bigger warehouse'] },
+    { company: 'SolarSack', founder: 'Henrik Larsen', tagline: 'A backpack that charges your phone while you walk.', problem: 'Phones die before the school day or the hike is over.', solution: 'A flexible solar panel on the back fills a built-in battery.', pitch: 'We make backpacks with a solar panel that charges your phone as you walk.', unit: 'backpack', units: 'backpacks', p: [90, 120], v: [55, 70], step: 200, u: [10, 20], mult: 7, kind: 'clean-tech hardware companies', basic: 'Day pack', deluxe: 'Trail pack', hue: 48, funds: ['Order solar panels', 'Hire a sales lead', 'Get safety certified'] },
+    { company: 'StudyBuddy', founder: 'Imani Cole', tagline: 'A practice app that explains every wrong answer.', problem: 'Private tutors cost sixty dollars an hour.', solution: 'Step-by-step practice and feedback for the price of lunch.', pitch: 'We built a practice app that coaches students through every problem.', unit: 'subscription', units: 'subscriptions', p: [10, 15], v: [3, 5], step: 1000, u: [15, 30], mult: 8, kind: 'software companies', basic: 'Single plan', deluxe: 'Family plan', hue: 180, funds: ['Hire more developers', 'Pay for school partnerships', 'Run social ads'] },
+    { company: 'Wheelie Good Food', founder: 'Sofia Marchetti', tagline: 'Fresh lunches from a truck that comes to you.', problem: 'Office parks are food deserts at lunchtime.', solution: 'A rotating truck schedule with a ten-minute pickup line.', pitch: 'We run food trucks that bring fresh lunch to office parks.', unit: 'meal', units: 'meals', p: [12, 14], v: [5, 7], step: 1000, u: [20, 35], mult: 3, kind: 'restaurant businesses', basic: 'Taco plate', deluxe: 'Feast plate', hue: 15, funds: ['Buy a second truck', 'Hire drivers and cooks', 'Upgrade the kitchen'] },
+    { company: 'ThreadLoop', founder: 'Kai Nakamura', tagline: 'Warm jackets spun from old jeans.', problem: 'Millions of pairs of jeans end up in landfills each year.', solution: 'We shred and respin denim into warm recycled jackets.', pitch: 'We turn old jeans into warm, stylish jackets.', unit: 'jacket', units: 'jackets', p: [85, 110], v: [50, 60], step: 100, u: [20, 35], mult: 5, kind: 'apparel brands', basic: 'Classic jacket', deluxe: 'Limited jacket', hue: 220, funds: ['Buy a denim shredder', 'Open a pop-up shop', 'Hire a seamstress team'] }
+  ];
+
+  const OUTLOOKS = [
+    { key: 'rocket', g: 0.5, pg: 0.4, mult: 2.4, label: 'Rocket ship', hint: 'more than double its value today', line: 'Look at that curve. It is climbing fast.', w: 2 },
+    { key: 'solid', g: 0.25, pg: 0.2, mult: 1.6, label: 'Solid climber', hint: 'about one and a half times its value today', line: 'We have grown every single year.', w: 3 },
+    { key: 'steady', g: 0.1, pg: 0.05, mult: 1.1, label: 'Steady', hint: 'about the same as its value today', line: 'We grow slowly but surely.', w: 3 },
+    { key: 'sinking', g: -0.2, pg: -0.1, mult: 0.55, label: 'Sinking', hint: 'only about half of its value today', line: 'I will be straight with you: this year was rough, but I know how to fix it.', w: 2 }
+  ];
+
+  const LINES = {
+    accept: ['That is a deal! Let us build something big together.', 'You drive a hard bargain, and I love it. Deal!'],
+    recounter: ['You are close. I can meet you here:', 'I cannot go that low, but I can do this:'],
+    reject: ['That is not even close. I built this company from nothing.', 'I would be giving away far too much. I cannot do that.'],
+    walk: 'We are too far apart. Thank you for your time, Shark, but I am out.',
+    pass: ['I am disappointed, but I respect it. Thank you for listening.', 'Understood. I will find another believer.'],
+    deal: ['Welcome to the team, Shark!', 'You will not regret this. Let us get to work.']
+  };
+
+  const POOLS = {
+    1: ['breakeven', 'profitAt', 'equityPct', 'equityCash', 'growthRate'],
+    2: ['target', 'slope', 'exp', 'growthRate', 'breakeven', 'system'],
+    3: ['vertex', 'system', 'exp', 'ineq', 'slope']
+  };
+  const ROUNDS = 6;
+  const START_FUND = 500000;
+  const EQS = [5, 6, 8, 10, 12, 15, 20, 25, 30];
+
+  /* ---------- founders ---------- */
+  function pickOutlook() {
+    const bag = [];
+    OUTLOOKS.forEach((o) => { for (let k = 0; k < o.w; k++) bag.push(o); });
+    return pick(bag);
+  }
+
+  function makeFounder(t, round, used) {
+    const p = rnd(t.p[0], t.p[1]);
+    const v = rnd(t.v[0], Math.min(t.v[1], p - 3));
+    const m = p - v;
+    const o = pickOutlook();
+    const u2 = t.step * rnd(t.u[0], t.u[1]);
+    const u3 = Math.round(u2 * (1 + o.g));
+    const u1 = Math.round(u2 / (1 + o.pg));
+    const bs = u3 < 5000 ? 50 : 100;
+    const be = Math.max(bs, Math.round(u3 * (0.38 + Math.random() * 0.27) / bs) * bs);
+    const F = m * be;
+    const rev = [u1 * p, u2 * p, u3 * p];
+    const costs3 = F + v * u3;
+    const profit = rev[2] - costs3;
+    const fair = profit * t.mult;
+
+    const factor = pick([0.65, 0.8, 0.9, 1.0, 1.15, 1.3, 1.5, 1.7]);
+    const vstep = fair < 400000 ? 25000 : 50000;
+    const V = Math.max(100000, Math.round(fair * factor / vstep) * vstep);
+    let cands = EQS.filter((e) => { const c = V * e / 100; return c >= 25000 && c <= 200000 && c % 1000 === 0; });
+    if (!cands.length) cands = EQS.filter((e) => { const c = V * e / 100; return c >= 20000 && c <= 250000; });
+    if (!cands.length) cands = [10];
+    const eq = pick(cands);
+    const cash = Math.round(V * eq / 100);
+    const askVal = cash / (eq / 100);
+    const walk = 0.95 * Math.min(askVal, fair * 1.1);
+    const futureVal = Math.round(fair * o.mult * (0.92 + Math.random() * 0.16) / 1000) * 1000;
+    const split = pick([[50, 30, 20], [40, 40, 20], [60, 25, 15]]);
+
+    const f = Object.assign({}, t, { p, v, m, o, u1, u2, u3, bs, be, F, rev, costs3, profit, fair, ask: { cash, eq }, askVal, walk, futureVal, split, round, outcome: null });
+    f.q = buildQ(chooseType(round, used), f);
+    return f;
+  }
+
+  function chooseType(round, used) {
+    const lvl = round < 2 ? 1 : round < 4 ? 2 : 3;
+    let pool = POOLS[lvl].filter((x) => used.indexOf(x) < 0);
+    if (!pool.length) pool = POOLS[lvl];
+    const t = pick(pool);
+    used.push(t);
+    return t;
+  }
+
+  /* ---------- math questions ---------- */
+  function buildQ(type, f) {
+    const co = f.company;
+    switch (type) {
+      case 'breakeven':
+        return {
+          concept: 'Linear equations', title: 'Break-even point',
+          prompt: `Each ${f.unit} sells for ${fmt(f.p)} and costs ${fmt(f.v)} to make. Fixed costs (rent, salaries, software) are ${fmt(f.F)} a year no matter what. How many ${f.units} must ${co} sell in a year to break even?`,
+          setup: ['Revenue = Costs', `${f.p}x = ${num(f.F)} + ${f.v}x`], unit: { pre: '', post: f.units }, answer: f.be, tol: 0.5,
+          hint: 'Break-even means revenue equals costs. Get the x terms on one side, then divide.',
+          steps: [`Set revenue equal to costs: ${f.p}x = ${num(f.F)} + ${f.v}x`, `Subtract ${f.v}x from both sides: ${f.m}x = ${num(f.F)}`, `Divide both sides by ${f.m}: x = ${num(f.be)}`]
+        };
+      case 'profitAt': {
+        const N = Math.round(f.u3 * 1.5 / f.bs) * f.bs;
+        const ans = f.m * N - f.F;
+        return {
+          concept: 'Evaluating expressions', title: 'Profit forecast',
+          prompt: `${co} expects to sell ${num(N)} ${f.units} next year. Profit is revenue minus costs, where x is the number of ${f.units} sold. What profit does the formula predict?`,
+          setup: [`P(x) = ${f.p}x − (${num(f.F)} + ${f.v}x)`, `P(${num(N)}) = ?`], unit: { pre: '$', post: '' }, answer: ans, tol: 0.5,
+          hint: 'Substitute the number of units for x, then follow the order of operations.',
+          steps: [`Combine the x terms: P(x) = ${f.m}x − ${num(f.F)}`, `Substitute x = ${num(N)}: ${f.m} × ${num(N)} − ${num(f.F)}`, `${num(f.m * N)} − ${num(f.F)} = ${fmt(ans)}`]
+        };
+      }
+      case 'target': {
+        const tu = f.u3 + f.bs * rnd(3, 8);
+        const T = f.m * tu - f.F;
+        return {
+          concept: 'Linear equations', title: 'Profit target',
+          prompt: `${f.founder} wants to earn ${fmt(T)} in profit next year. Profit is P(x) = ${f.m}x − ${num(f.F)}, where x is the number of ${f.units} sold. How many ${f.units} must they sell?`,
+          setup: [`${f.m}x − ${num(f.F)} = ${num(T)}`], unit: { pre: '', post: f.units }, answer: tu, tol: 0.5,
+          hint: 'Undo the subtraction first by adding to both sides, then divide.',
+          steps: [`Add ${num(f.F)} to both sides: ${f.m}x = ${num(T + f.F)}`, `Divide both sides by ${f.m}: x = ${num(tu)}`]
+        };
+      }
+      case 'ineq': {
+        const tu = f.u3 + f.bs * rnd(3, 8);
+        const T = f.m * tu - f.F - rnd(1, f.m - 1);
+        return {
+          concept: 'Inequalities', title: 'Minimum sales',
+          prompt: `${co} needs profit of at least ${fmt(T)}. Profit is P(x) = ${f.m}x − ${num(f.F)}. What is the smallest whole number of ${f.units} that gets them there?`,
+          setup: [`${f.m}x − ${num(f.F)} ≥ ${num(T)}`], unit: { pre: '', post: f.units }, answer: tu, tol: 0.5,
+          hint: 'Solve it like an equation. The answer is "x is at least some number", so round up to a whole unit.',
+          steps: [`Add ${num(f.F)} to both sides: ${f.m}x ≥ ${num(T + f.F)}`, `Divide by ${f.m}: x ≥ ${((T + f.F) / f.m).toFixed(2)}`, `You cannot sell part of a unit, so round up: ${num(tu)}`]
+        };
+      }
+      case 'system': {
+        const a = f.p, b = a + pick([4, 5, 6, 8, 10]);
+        const y = 100 * rnd(2, 9), x = 100 * rnd(3, 12);
+        const N = x + y, R = a * x + b * y;
+        return {
+          concept: 'Systems of equations', title: 'Pop-up weekend',
+          prompt: `At a weekend pop-up, ${co} sold ${num(N)} items: the ${f.basic} for ${fmt(a)} each and the ${f.deluxe} for ${fmt(b)} each. Total sales were ${fmt(R)}. How many ${f.deluxe} items did they sell?`,
+          setup: [`x + y = ${num(N)}`, `${a}x + ${b}y = ${num(R)}`, `x = ${f.basic}, y = ${f.deluxe}`], unit: { pre: '', post: 'sold' }, answer: y, tol: 0.5,
+          hint: 'Solve the first equation for x, substitute it into the second, and solve for y.',
+          steps: [`From the first equation: x = ${num(N)} − y`, `Substitute: ${a}(${num(N)} − y) + ${b}y = ${num(R)}`, `Distribute: ${num(a * N)} + ${b - a}y = ${num(R)}`, `Subtract ${num(a * N)}, then divide by ${b - a}: y = ${num(y)}`]
+        };
+      }
+      case 'exp': {
+        if (Math.random() < 0.45) {
+          const U = 500 * rnd(1, 8), k = pick([2, 3, 4]), T = k * rnd(2, 4), n = T / k;
+          return {
+            concept: 'Exponential growth', title: 'Doubling users',
+            prompt: `${co} has ${num(U)} app users today, and the number of users doubles every ${k} months. How many users will it have in ${T} months?`,
+            setup: [`users = ${num(U)} × 2^(${T} ÷ ${k})`], unit: { pre: '', post: 'users' }, answer: U * Math.pow(2, n), tol: 0.5,
+            hint: 'Count how many doubling periods fit in the time, then raise 2 to that power.',
+            steps: [`Doubling periods: ${T} ÷ ${k} = ${n}`, `Multiply by 2 that many times: ${num(U)} × 2^${n}`, `${num(U)} × ${Math.pow(2, n)} = ${num(U * Math.pow(2, n))}`]
+          };
+        }
+        const [r, t] = pick([[10, 2], [20, 2], [25, 2], [50, 2], [50, 3], [100, 3]]);
+        const S = 1600 * rnd(2, 9);
+        const ans = Math.round(S * Math.pow(1 + r / 100, t));
+        return {
+          concept: 'Exponential growth', title: 'Website traffic',
+          prompt: `${co}'s website had ${num(S)} visitors this month. If traffic grows ${r}% every month, how many visitors will it get in ${t} months?`,
+          setup: [`V(t) = ${num(S)} × (1 + ${dec(r)})^t`, `V(${t}) = ?`], unit: { pre: '', post: 'visitors' }, answer: ans, tol: 0.5,
+          hint: 'Growing by r% each period multiplies by (1 + r) each period. Turn the percent into a decimal first.',
+          steps: [`Growth factor: 1 + ${dec(r)} = ${+(1 + r / 100).toFixed(2)}`, `Apply it ${t} times: ${num(S)} × ${+(1 + r / 100).toFixed(2)}^${t}`, `= ${num(ans)}`]
+        };
+      }
+      case 'vertex': {
+        const B = pick([2, 4, 5, 10]);
+        const ps = f.p + rnd(2, 5);
+        const A = 2 * B * ps;
+        return {
+          concept: 'Quadratics', title: 'Best price',
+          prompt: `A test shows that at a price of p dollars, ${co} sells q = ${A} − ${B}p ${f.units} per week. Revenue is price times quantity. What price brings in the most revenue?`,
+          setup: [`R(p) = p(${A} − ${B}p)`, `R(p) = −${B}p² + ${A}p`], unit: { pre: '$', post: '' }, answer: ps, tol: 0.01,
+          hint: 'Revenue is a parabola that opens downward. Its top is at p = −b ÷ 2a.',
+          steps: [`Multiply it out: R(p) = −${B}p² + ${A}p, so a = −${B} and b = ${A}`, `Vertex: p = −b ÷ 2a = −${A} ÷ (2 × −${B})`, `p = ${A} ÷ ${2 * B} = ${fmt(ps)}`]
+        };
+      }
+      case 'slope': {
+        const s = 50 * rnd(2, 8), b0 = 100 * rnd(2, 10);
+        const m1 = rnd(1, 3), m2 = m1 + rnd(3, 5), mt = rnd(10, 14);
+        const y1 = b0 + s * m1, y2 = b0 + s * m2, ans = b0 + s * mt;
+        return {
+          concept: 'Linear functions', title: 'Subscriber trend',
+          prompt: `${co} had ${num(y1)} subscribers in month ${m1} and ${num(y2)} in month ${m2}. If growth stays on a straight line, how many subscribers will it have in month ${mt}?`,
+          setup: [`(${m1}, ${num(y1)})  and  (${m2}, ${num(y2)})`, `y = mx + b`], unit: { pre: '', post: 'subscribers' }, answer: ans, tol: 0.5,
+          hint: 'Find the slope between the two points, then use point-slope form to reach the new month.',
+          steps: [`Slope: (${num(y2)} − ${num(y1)}) ÷ (${m2} − ${m1}) = ${s} per month`, `Intercept: ${num(y1)} − ${s} × ${m1} = ${num(b0)}`, `Month ${mt}: ${s} × ${mt} + ${num(b0)} = ${num(ans)}`]
+        };
+      }
+      case 'growthRate': {
+        const Y2 = f.rev[1], Y3 = f.rev[2];
+        return {
+          concept: 'Percent change', title: 'Revenue trend',
+          prompt: `Look at the revenue chart. Year 2 revenue was ${fmt(Y2)} and Year 3 was ${fmt(Y3)}. By what percent did revenue change from Year 2 to Year 3? (Use a negative number if it fell.)`,
+          setup: [`change = (${num(Y3)} − ${num(Y2)}) ÷ ${num(Y2)}`], unit: { pre: '', post: '%' }, answer: Math.round(f.o.g * 100), tol: 0.1,
+          hint: 'Percent change = (new − old) ÷ old, then multiply by 100.',
+          steps: [`Difference: ${num(Y3)} − ${num(Y2)} = ${num(Y3 - Y2)}`, `Divide by the old value: ${num(Y3 - Y2)} ÷ ${num(Y2)} = ${+(f.o.g).toFixed(2)}`, `Times 100: ${Math.round(f.o.g * 100)}%`]
+        };
+      }
+      case 'equityPct': {
+        const Vh = 100000 * rnd(4, 20), e = pick([5, 8, 10, 12, 15, 20, 25]), X = Vh * e / 100;
+        return {
+          concept: 'Ratios and proportions', title: 'What stake?',
+          prompt: `Imagine ${co} is valued at ${fmt(Vh)}. You invest ${fmt(X)}. What percent of the company do you own?`,
+          setup: [`${num(X)} = e × ${num(Vh)}`], unit: { pre: '', post: '%' }, answer: e, tol: 0.1,
+          hint: 'Your cash equals your share times the whole company. Divide, then turn the decimal into a percent.',
+          steps: [`Divide both sides by ${num(Vh)}: e = ${num(X)} ÷ ${num(Vh)} = ${dec(e)}`, `As a percent: ${e}%`]
+        };
+      }
+      case 'equityCash': {
+        const Vh = 100000 * rnd(4, 20), e = pick([5, 8, 10, 12, 15, 20, 25]), X = Vh * e / 100;
+        return {
+          concept: 'Ratios and proportions', title: 'What price?',
+          prompt: `You want to own ${e}% of ${co}, and the company is valued at ${fmt(Vh)}. How much cash must you invest?`,
+          setup: [`cash = ${dec(e)} × ${num(Vh)}`], unit: { pre: '$', post: '' }, answer: X, tol: 0.5,
+          hint: 'Change the percent to a decimal, then multiply by the value of the whole company.',
+          steps: [`${e}% = ${dec(e)}`, `${dec(e)} × ${num(Vh)} = ${fmt(X)}`]
+        };
+      }
+    }
+  }
+
+  function gateQ(offer) {
+    const V = offer.cash / (offer.eq / 100);
+    const d = dec(offer.eq);
+    const exact = Math.abs(V - Math.round(V)) < 0.005;
+    return {
+      concept: 'Valuation: solving cash = % × V', title: 'Sign the term sheet',
+      prompt: `You are putting in ${fmt(offer.cash)} for ${offer.eq}% of ${cur().company}. Before you sign, prove you know what the whole company is worth at this price.`,
+      setup: [`${num(offer.cash)} = ${d} × V`, 'V = ?'], unit: { pre: '$', post: '' }, answer: V, tol: 500,
+      note: exact ? '' : 'It does not divide evenly. Round to the nearest $1,000.',
+      hint: `${offer.eq}% of the company costs ${fmt(offer.cash)}. Divide both sides of the equation by ${d} to get the whole company.`,
+      steps: [`Your cash buys ${offer.eq}% of the company: ${num(offer.cash)} = ${d} × V`, `Divide both sides by ${d}: V = ${num(offer.cash)} ÷ ${d}`, `V ${exact ? '=' : '≈'} ${fmt(V)}`]
+    };
+  }
+
+  /* ---------- state ---------- */
+  let G = blank();
+  function blank() { return { phase: 'title', founders: [], i: 0, fund: START_FUND, deals: [], xp: 0, streak: 0, bestStreak: 0, log: [], slide: 0 }; }
+  const cur = () => G.founders[G.i];
+  const offerVal = (o) => o.cash / (o.eq / 100);
+
+  function newGame() {
+    const used = [];
+    const founders = shuffle(TPL).slice(0, ROUNDS).map((t, i) => makeFounder(t, i, used));
+    G = blank();
+    G.founders = founders;
+    G.phase = 'enter';
+    startPitch();
+  }
+  function startPitch() {
+    const f = cur();
+    G.slide = 0; G.offer = { cash: f.ask.cash, eq: f.ask.eq }; G.counters = 0;
+    G.dd = { tries: 0, hint: false, status: 'open', msg: '', tone: '' };
+    G.gate = null; G.reply = null; G.ctr = null; G.result = null; G.intel = false;
+  }
+
+  function award(base) {
+    G.xp += base + Math.min(G.streak, 5) * 10;
+  }
+  function good1() { G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); }
+
+  /* ---------- views ---------- */
+  function avatar(f, size) {
+    const ini = f.founder.split(' ').map((w) => w[0]).join('');
+    return `<svg width="${size}" height="${size}" viewBox="0 0 60 60" role="img" aria-label="${f.founder}"><circle cx="30" cy="30" r="28" fill="hsl(${f.hue},50%,30%)" stroke="#f2b84b" stroke-width="2"/><text x="30" y="37" text-anchor="middle" font-family="Big Shoulders Display, Impact, sans-serif" font-weight="900" font-size="22" fill="#eaf3f8">${ini}</text></svg>`;
+  }
+
+  function hud() {
+    const f = G.founders.length ? cur() : null;
+    $id('stats').innerHTML = `
+      <div class="stat money"><span>Fund</span><strong>${fmt(G.fund)}</strong></div>
+      <div class="stat"><span>Pitch</span><strong>${Math.min(G.i + 1, ROUNDS)} / ${ROUNDS}</strong></div>
+      <div class="stat"><span>Stakes</span><strong>${G.deals.length}</strong></div>
+      <div class="stat"><span>Math XP</span><strong>${G.xp}</strong></div>
+      <div class="stat"><span>Streak</span><strong>×${G.streak}</strong></div>`;
+  }
+
+  function viewTitle() {
+    let best = '';
+    try { const b = JSON.parse(localStorage.getItem(BEST_KEY) || 'null'); if (b) best = `<p class="best">Best season: ${signed(b.profit)} profit · ${b.xp} XP</p>`; } catch (e) { /* storage unavailable */ }
+    return `<section class="title">
+      <p class="kicker">Algebra for investors</p>
+      <h1>Algebra<br><em>Tank</em></h1>
+      <p class="lede">You are the Shark. Founders pitch you ${ROUNDS} companies with a ${fmt(START_FUND)} fund on the line. Read the numbers, solve the math, and make offers worth taking. Pay too much and your stake sinks.</p>
+      <div class="fin-wrap" aria-hidden="true"><svg class="fin" viewBox="0 0 84 60"><path d="M2 58 C 30 52 40 22 50 2 C 54 26 68 46 82 58 Z"/></svg></div>
+      <ol class="steps">
+        <li><span class="n">1</span><b>Watch the pitch</b><span>Three slides: the product, the numbers, the ask.</span></li>
+        <li><span class="n">2</span><b>Do your due diligence</b><span>Solve a business math problem to earn intel.</span></li>
+        <li><span class="n">3</span><b>Accept, counter, or decline</b><span>Negotiate cash or equity up to three times.</span></li>
+        <li><span class="n">4</span><b>Prove the valuation</b><span>You cannot sign until you solve for the company's value.</span></li>
+      </ol>
+      <div class="row" style="align-items:center"><button class="btn gold big" data-act="start" style="flex:0 0 auto">Enter the Tank</button>${best}</div>
+    </section>`;
+  }
+
+  function chyron(f) {
+    return `<div class="chyron"><span class="chy-name">${f.founder}</span><span class="chy-co">${f.company}</span><span class="chy-ask">Asking ${fmt(f.ask.cash)} for ${f.ask.eq}%</span></div>`;
+  }
+
+  function viewEnter() {
+    const f = cur();
+    return `<section class="center nextup">
+      <p class="eyebrow">Pitch ${G.i + 1} of ${ROUNDS}</p>
+      <div class="who">${avatar(f, 84)}<div><b style="font-size:22px">${f.founder}</b><span>walks into the Tank</span></div></div>
+      <h2>${f.company}</h2>
+      <p class="qtext" style="color:var(--mute)">${f.tagline}</p>
+      <div class="row"><button class="btn gold big" data-act="hear" style="flex:0 0 auto">Hear the pitch</button></div>
+    </section>`;
+  }
+
+  function deckHTML(f) {
+    const s = G.slide;
+    const tabs = ['1 · Product', '2 · Numbers', '3 · The ask'].map((n, i) => `<button role="tab" aria-selected="${i === s}" data-act="slide" data-n="${i}">${n}</button>`).join('');
+    let body = '';
+    if (s === 0) {
+      body = `<div class="kick">Slide 1 of 3 · The product</div>
+        <h2>${f.company}</h2><p class="tag">${f.tagline}</p>
+        <div class="two"><div><h3>The problem</h3><p>${f.problem}</p></div><div><h3>Our fix</h3><p>${f.solution}</p></div></div>
+        <div class="econ"><div><span>Sells for</span><strong>${fmt(f.p)}</strong></div><div><span>Costs to make</span><strong>${fmt(f.v)}</strong></div><div><span>Fixed costs / yr</span><strong>${fmt(f.F)}</strong></div></div>`;
+    } else if (s === 1) {
+      const mx = Math.max.apply(null, f.rev), H = 110;
+      const bars = f.rev.map((r, i) => { const h = Math.round(r / mx * H), x = 20 + i * 95; return `<rect class="bar${i === 2 ? ' last' : ''}" x="${x}" y="${140 - h}" width="72" height="${h}" rx="2"/><text x="${x + 36}" y="${134 - h}" text-anchor="middle">${fmtK(r)}</text><text x="${x + 36}" y="158" text-anchor="middle" style="fill:var(--mute)">Year ${i + 1}</text>`; }).join('');
+      body = `<div class="kick">Slide 2 of 3 · The numbers</div>
+        <h2>Revenue by year</h2>
+        <div class="chart-row">
+          <svg class="chart" viewBox="0 0 310 168" role="img" aria-label="Bar chart of revenue: ${f.rev.map((r, i) => 'Year ' + (i + 1) + ' ' + fmt(r)).join(', ')}"><line class="axis" x1="10" y1="140" x2="300" y2="140"/>${bars}</svg>
+          <div class="ledger">
+            <div><span>${f.units[0].toUpperCase() + f.units.slice(1)} sold (Year 3)</span><b>${num(f.u3)}</b></div>
+            <div><span>Revenue (Year 3)</span><b>${fmt(f.rev[2])}</b></div>
+            <div><span>Total costs (Year 3)</span><b>${fmt(f.costs3)}</b></div>
+          </div>
+        </div>
+        <p class="multiple">${f.kind[0].toUpperCase() + f.kind.slice(1)} like this usually sell for about <b>${f.mult} times</b> their yearly profit.</p>`;
+    } else {
+      body = `<div class="kick">Slide 3 of 3 · The ask</div>
+        <div class="bigask"><small>${f.founder} is asking</small>${fmt(f.ask.cash)}<br>for ${f.ask.eq}% equity</div>
+        <div><h3>Where the money goes</h3><div class="funds">${f.funds.map((n, i) => `<div class="fund"><span>${n}</span><b>${fmt(f.ask.cash * f.split[i] / 100)}</b><i style="--w:${f.split[i]}%"></i></div>`).join('')}</div></div>`;
+    }
+    return `<div class="deck-tabs" role="tablist" aria-label="Pitch deck slides">${tabs}</div><div class="deck" id="deck" key="${s}">${body}</div>`;
+  }
+
+  function speech(f, s) {
+    const a = f.ask;
+    if (s === 0) return `“Sharks, I'm ${f.founder}, founder of ${f.company}. ${f.pitch} I'm seeking ${fmt(a.cash)} for ${a.eq}% of the company.”`;
+    if (s === 1) return `“Last year we sold ${num(f.u3)} ${f.units}. Revenue was ${fmt(f.rev[2])} against ${fmt(f.costs3)} in total costs. ${f.o.line} Companies like mine usually sell for about ${f.mult} times yearly profit.”`;
+    return `“So here is my ask: ${fmt(a.cash)} for ${a.eq}%. Every dollar goes to ${f.funds[0].toLowerCase()}, ${f.funds[1].toLowerCase()}, and ${f.funds[2].toLowerCase()}.”`;
+  }
+
+  const who = (f) => `<div class="who">${avatar(f, 52)}<div><b>${f.founder}</b><span>${f.company}</span></div></div>`;
+  const inputRow = (u, id, act) => `<div class="ans"><label class="sr" for="${id}">Your answer</label>${u.pre ? `<span class="pre">${u.pre}</span>` : ''}<input id="${id}" type="text" inputmode="decimal" autocomplete="off" placeholder="Type your answer" data-enter="${act}" data-focus>${u.post ? `<span class="post">${u.post}</span>` : ''}</div>`;
+  const stepsHTML = (q) => `<ol class="steps-list">${q.steps.map((s) => `<li>${s}</li>`).join('')}</ol>`;
+
+  function panelPitch(f) {
+    const last = G.slide === 2;
+    return `${who(f)}<div class="speech">${speech(f, G.slide)}</div>
+      <div class="row">${G.slide > 0 ? '<button class="btn ghost" data-act="slide" data-n="' + (G.slide - 1) + '">Back</button>' : ''}${last ? '<button class="btn gold" data-act="startDD">Start due diligence</button>' : '<button class="btn gold" data-act="slide" data-n="' + (G.slide + 1) + '">Next slide</button>'}</div>
+      <p class="tip">Study the deck. Every number on it could matter later.</p>`;
+  }
+
+  function panelDD(f) {
+    const q = f.q, d = G.dd;
+    let h = `<div class="eyebrow">Due diligence · ${q.concept}</div><h3 class="ptitle">${q.title}</h3><p class="qtext">${q.prompt}</p><div class="setup mono">${q.setup.join('<br>')}</div>`;
+    if (d.status === 'open') {
+      h += inputRow(q.unit, 'dd-in', 'submitDD');
+      if (d.msg) h += `<div class="msg ${d.tone}">${d.msg}</div>`;
+      if (d.hint) h += `<div class="msg info"><b>Hint:</b> ${q.hint}</div>`;
+      h += `<div class="row"><button class="btn gold" data-act="submitDD">Check answer</button><button class="btn ghost" data-act="hintDD" ${d.hint ? 'disabled' : ''}>Hint (−20 XP)</button></div><p class="tip">Solve it right to earn <b>intel</b> on where this company is headed.</p>`;
+    } else if (d.status === 'correct') {
+      h += `<div class="msg good"><b>Correct.</b> ${d.tries === 1 ? 'First try!' : 'Nice recovery.'}</div><details><summary>See the algebra</summary>${stepsHTML(q)}</details>
+        <div class="intel"><b>Intel · ${f.o.label}</b><span>Analysts expect ${f.company} to be worth ${f.o.hint} in three years.</span></div>
+        <button class="btn gold" data-act="toDecide">Make your decision</button>`;
+    } else {
+      h += `<div class="msg bad"><b>The answer was ${q.unit.pre}${num(q.answer)}${q.unit.post ? ' ' + q.unit.post : ''}.</b> Here is how to get there:</div>${stepsHTML(q)}
+        <div class="msg info">No intel this time. You will have to judge ${f.company}'s future from the deck.</div>
+        <button class="btn gold" data-act="toDecide">Make your decision</button>`;
+    }
+    return h;
+  }
+
+  function panelDecide(f) {
+    const o = G.offer, left = 3 - G.counters;
+    const changed = o.cash !== f.ask.cash || o.eq !== f.ask.eq;
+    const afford = o.cash <= G.fund;
+    return `${who(f)}
+      <div class="offer"><span>${changed ? 'Offer on the table' : 'The ask'}</span><strong>${fmt(o.cash)} for ${o.eq}%</strong><em>Your fund: ${fmt(G.fund)} · Counters left: ${left}</em></div>
+      ${G.intel ? '' : ''}
+      <div class="row">
+        <button class="btn green" data-act="accept" ${afford ? '' : 'disabled'}>Accept</button>
+        <button class="btn gold" data-act="openCounter" ${left > 0 ? '' : 'disabled'}>Counter</button>
+        <button class="btn coral" data-act="decline">Decline</button>
+      </div>
+      ${afford ? '' : '<div class="msg bad">This costs more than your fund. Counter with less cash.</div>'}
+      ${left === 0 ? '<div class="msg info">No counters left. Take this offer or walk away.</div>' : ''}
+      <p class="tip"><b>Shark tip:</b> an offer is only as good as the company's value behind it. Compare what you are paying with what the business is worth.</p>`;
+  }
+
+  function panelCounter(f) {
+    const c = G.ctr, afford = c.cash <= G.fund;
+    const isCash = c.mode === 'cash';
+    return `<div class="eyebrow">Counter-offer</div><h3 class="ptitle">What do you change?</h3>
+      <div class="seg" role="group" aria-label="Adjust"><button aria-pressed="${isCash}" data-act="mode" data-m="cash">Adjust cash</button><button aria-pressed="${!isCash}" data-act="mode" data-m="eq">Adjust equity</button></div>
+      <div class="stepper"><button class="btn" data-act="step" data-d="-1" aria-label="Decrease">−</button>
+        <div class="ans">${isCash ? '<span class="pre">$</span>' : ''}<label class="sr" for="ctr-in">${isCash ? 'Cash offered' : 'Equity requested'}</label><input id="ctr-in" type="text" inputmode="decimal" value="${isCash ? num(c.cash) : c.eq}" data-enter="setCtr" data-change="setCtr" autocomplete="off">${isCash ? '' : '<span class="post">%</span>'}</div>
+        <button class="btn" data-act="step" data-d="1" aria-label="Increase">+</button></div>
+      <div class="offer"><span>Your counter</span><strong>${fmt(c.cash)} for ${c.eq}%</strong><em>${isCash ? 'Steps of $5,000' : 'Steps of 1%'} · Fund: ${fmt(G.fund)}</em></div>
+      ${afford ? '' : '<div class="msg bad">That is more than your fund.</div>'}
+      <div class="row"><button class="btn gold" data-act="sendCtr" ${afford ? '' : 'disabled'}>Send counter</button><button class="btn ghost" data-act="backTable">Back</button></div>`;
+  }
+
+  function panelReply(f) {
+    const r = G.reply;
+    let btn = '';
+    if (r.type === 'accepted') btn = '<button class="btn green" data-act="toGate">Sign the term sheet</button>';
+    else if (r.type === 'walkout') btn = '<button class="btn gold" data-act="walkout">Leave the Tank</button>';
+    else btn = '<button class="btn gold" data-act="backTable">Back to the table</button>';
+    let extra = '';
+    if (r.type === 'recounter') extra = `<div class="offer"><span>${f.founder}'s counter${G.counters >= 3 ? ' · final' : ''}</span><strong>${fmt(r.offer.cash)} for ${r.offer.eq}%</strong></div>`;
+    if (r.type === 'accepted') extra = `<div class="offer"><span>Agreed terms</span><strong>${fmt(r.offer.cash)} for ${r.offer.eq}%</strong></div>`;
+    return `${who(f)}<div class="speech">“${r.text}”</div>${extra}${btn}`;
+  }
+
+  function panelGate(f) {
+    const q = G.gate.q, d = G.gate;
+    let h = `<div class="eyebrow">Valuation check · required to sign</div><h3 class="ptitle">${q.title}</h3><p class="qtext">${q.prompt}</p><div class="setup mono">${q.setup.join('<br>')}</div>`;
+    if (d.status === 'open') {
+      h += inputRow(q.unit, 'gate-in', 'submitGate');
+      if (q.note) h += `<p class="tip">${q.note}</p>`;
+      if (d.msg) h += `<div class="msg ${d.tone}">${d.msg}</div>`;
+      if (d.hint) h += `<div class="msg info"><b>Hint:</b> ${q.hint}</div>`;
+      if (d.tries >= 2) h += `<div class="msg info"><b>Worked solution:</b></div>${stepsHTML(q)}`;
+      h += `<div class="row"><button class="btn green" data-act="submitGate">Check and sign</button><button class="btn ghost" data-act="hintGate" ${d.hint ? 'disabled' : ''}>Hint (−10 XP)</button><button class="btn coral" data-act="gateBack">Back out</button></div>`;
+    } else {
+      h += `<div class="msg good"><b>Correct.</b> The company is worth ${fmt(q.answer)} at this price.</div><details><summary>See the algebra</summary>${stepsHTML(q)}</details><button class="btn green big" data-act="shake">Shake hands</button>`;
+    }
+    return h;
+  }
+
+  function viewPlay() {
+    const f = cur(), ph = G.phase;
+    const panel = { pitch: panelPitch, dd: panelDD, decide: panelDecide, counter: panelCounter, reply: panelReply, gate: panelGate }[ph](f);
+    return `${chyron(f)}<div class="play"><section class="deck-col">${deckHTML(f)}</section><section class="panel-col" aria-live="polite"><div class="panel">${panel}</div></section></div>`;
+  }
+
+  function viewResult() {
+    const r = G.result, f = cur(), last = G.i === ROUNDS - 1;
+    const next = last ? '<button class="btn gold big" data-act="finale" style="flex:0 0 auto">See season results</button>' : '<button class="btn gold big" data-act="nextPitch" style="flex:0 0 auto">Next pitch</button>';
+    if (r.type === 'deal') {
+      return `<section class="center"><span class="stamp deal">Deal</span>
+        <div class="who">${avatar(f, 52)}<div class="speech" style="flex:1">“${pick(LINES.deal)}”</div></div>
+        <div class="facts"><div><span>Invested</span><strong>${fmt(r.cash)}</strong></div><div><span>You own</span><strong>${r.eq}%</strong></div><div><span>Company value</span><strong>${fmt(r.val)}</strong></div><div><span>Fund left</span><strong>${fmt(G.fund)}</strong></div></div>
+        <div class="row">${next}</div></section>`;
+    }
+    return `<section class="center"><span class="stamp pass">${r.type === 'walk' ? 'No deal' : 'Pass'}</span>
+      <div class="who">${avatar(f, 52)}<div class="speech" style="flex:1">“${r.type === 'walk' ? LINES.walk : pick(LINES.pass)}”</div></div>
+      <div class="row">${next}</div></section>`;
+  }
+
+  function viewFinale() {
+    let stakes = 0, rows = '';
+    G.founders.forEach((f) => {
+      const d = G.deals.find((x) => x.idx === f.round);
+      const paid = d ? d.val : f.askVal;
+      const ratio = paid / f.fair;
+      const verdict = ratio < 0.9 ? '<span class="pill good">Bargain</span>' : ratio <= 1.1 ? '<span class="pill mid">Fair</span>' : '<span class="pill bad">Pricey</span>';
+      let outcome, gain;
+      if (d) {
+        const stake = d.eq / 100 * f.futureVal; stakes += stake; gain = stake - d.cash;
+        outcome = `Invested ${fmt(d.cash)} for ${d.eq}%`;
+      } else {
+        gain = f.ask.eq / 100 * f.futureVal - f.ask.cash;
+        outcome = `Passed. ${gain >= 0 ? 'Missed' : 'Dodged'} ${signed(Math.abs(gain)).replace('+', '')}`;
+      }
+      rows += `<tr><td><b>${f.company}</b><br><span style="color:var(--mute)">${f.o.label}</span></td><td>${outcome}</td><td class="num">${fmt(paid)}</td><td class="num">${fmt(f.fair)}</td><td>${verdict}</td><td class="num">${fmt(f.futureVal)}</td><td class="num ${d ? (gain >= 0 ? 'up' : 'down') : ''}">${d ? signed(gain) : '—'}</td></tr>`;
+    });
+    const net = G.fund + stakes, profit = net - START_FUND;
+    const rank = profit < 0 ? 'Chum' : profit < 60000 ? 'Minnow' : profit < 200000 ? 'Hammerhead' : 'Great White';
+    const first = G.log.filter((l) => l.result === 'first').length;
+    try {
+      const b = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
+      if (!b || profit > b.profit) localStorage.setItem(BEST_KEY, JSON.stringify({ profit, xp: G.xp }));
+    } catch (e) { /* storage unavailable */ }
+    const label = { first: 'First try', second: 'Second try', later: 'Took a few tries', missed: 'Missed' };
+    return `<section class="finale">
+      <div><p class="eyebrow">Three years later</p><h2>You are a<br><em>${rank}</em></h2></div>
+      <div class="facts"><div><span>Net worth</span><strong>${fmt(net)}</strong></div><div><span>Season profit</span><strong class="${profit >= 0 ? 'up' : 'down'}">${signed(profit)}</strong></div><div><span>Math XP</span><strong>${G.xp}</strong></div><div><span>Solved first try</span><strong>${first} / ${G.log.length}</strong></div><div><span>Best streak</span><strong>×${G.bestStreak}</strong></div></div>
+      <div><h3 class="sect">Your portfolio</h3><div class="scroller"><table><thead><tr><th>Company</th><th>Decision</th><th class="num">Price paid</th><th class="num">Fair value</th><th>Verdict</th><th class="num">Value in 3 yrs</th><th class="num">Your gain</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="tip" style="margin-top:8px">Fair value is yearly profit times the industry multiple. Price paid is the company value your deal implied (cash ÷ equity).</p></div>
+      <div><h3 class="sect">Algebra report card</h3><div class="log">${G.log.map((l) => `<div><span>${l.concept} <span style="color:var(--mute)">· ${l.company}</span></span><span class="pill ${l.result === 'first' ? 'good' : l.result === 'missed' ? 'bad' : 'mid'}">${label[l.result]}</span></div>`).join('')}</div></div>
+      <div class="row"><button class="btn gold big" data-act="restart" style="flex:0 0 auto">New season</button></div>
+    </section>`;
+  }
+
+  function render(scroll) {
+    hud();
+    document.body.dataset.phase = G.phase;
+    const views = { title: viewTitle, enter: viewEnter, pitch: viewPlay, dd: viewPlay, decide: viewPlay, counter: viewPlay, reply: viewPlay, gate: viewPlay, result: viewResult, finale: viewFinale };
+    const el = $id('screen');
+    el.innerHTML = views[G.phase]();
+    if (scroll) window.scrollTo(0, 0);
+    const inp = el.querySelector('[data-focus]');
+    if (inp) inp.focus({ preventScroll: !scroll });
+  }
+  function go(ph) { G.phase = ph; render(true); }
+
+  /* ---------- actions ---------- */
+  function readInput(id) { const el = $id(id); return el ? el.value : ''; }
+
+  const A = {
+    start() { newGame(); render(true); },
+    restart() { G = blank(); render(true); },
+    hear() { go('pitch'); },
+    slide(b) { G.slide = +b.dataset.n; render(false); },
+    startDD() { go('dd'); },
+    submitDD() {
+      const f = cur(), q = f.q, d = G.dd;
+      const n = parseNum(readInput('dd-in'));
+      if (n === null) { d.msg = 'Type a number to answer.'; d.tone = 'bad'; render(false); return; }
+      d.tries++;
+      if (Math.abs(n - q.answer) <= q.tol) {
+        d.status = 'correct'; G.intel = true;
+        if (d.tries === 1) { good1(); award(100); } else { G.streak = 0; G.xp += 60; }
+        G.log.push({ concept: q.concept, company: f.company, result: d.tries === 1 ? 'first' : 'second' });
+      } else {
+        G.streak = 0;
+        if (d.tries >= 2) { d.status = 'revealed'; G.log.push({ concept: q.concept, company: f.company, result: 'missed' }); }
+        else { d.msg = 'Not quite. Check your setup and try again. You have one more attempt.'; d.tone = 'bad'; }
+      }
+      render(false);
+    },
+    hintDD() { G.dd.hint = true; G.xp = Math.max(0, G.xp - 20); render(false); },
+    toDecide() { go('decide'); },
+    accept() { openGate(G.offer); },
+    decline() { G.result = { type: 'pass' }; cur().outcome = 'pass'; go('result'); },
+    openCounter() { G.ctr = { cash: G.offer.cash, eq: G.offer.eq, mode: 'cash' }; go('counter'); },
+    mode(b) { G.ctr.mode = b.dataset.m; render(false); },
+    step(b) {
+      const c = G.ctr, d = +b.dataset.d;
+      if (c.mode === 'cash') c.cash = Math.max(5000, Math.min(1000000, Math.round(c.cash / 5000) * 5000 + d * 5000));
+      else c.eq = Math.max(1, Math.min(60, Math.round(c.eq) + d));
+      render(false);
+    },
+    setCtr() {
+      const c = G.ctr, n = parseNum(readInput('ctr-in'));
+      if (n !== null && n > 0) { if (c.mode === 'cash') c.cash = Math.max(1000, Math.round(n)); else c.eq = Math.max(1, Math.min(60, Math.round(n * 10) / 10)); }
+      render(false);
+    },
+    backTable() { go('decide'); },
+    sendCtr() {
+      const f = cur(), c = G.ctr;
+      if (c.cash > G.fund) return;
+      G.counters++;
+      const val = offerVal(c), curVal = offerVal(G.offer);
+      if (val >= f.walk) {
+        G.reply = { type: 'accepted', text: pick(LINES.accept), offer: { cash: c.cash, eq: c.eq } };
+      } else if (val >= f.walk * 0.85) {
+        const target = Math.max(f.walk, (val + curVal) / 2);
+        const eq2 = Math.max(1, Math.floor(c.cash / target * 100));
+        G.offer = { cash: c.cash, eq: eq2 };
+        G.reply = { type: 'recounter', text: pick(LINES.recounter), offer: { cash: c.cash, eq: eq2 } };
+      } else if (G.counters >= 3) {
+        G.reply = { type: 'walkout', text: LINES.walk };
+      } else {
+        G.reply = { type: 'rejected', text: pick(LINES.reject) };
+      }
+      go('reply');
+    },
+    walkout() { G.result = { type: 'walk' }; cur().outcome = 'walk'; go('result'); },
+    toGate() { openGate(G.reply.offer); },
+    gateBack() { go(G.reply && G.reply.type === 'accepted' ? 'reply' : 'decide'); },
+    submitGate() {
+      const d = G.gate, q = d.q;
+      const n = parseNum(readInput('gate-in'));
+      if (n === null) { d.msg = 'Type a number to answer.'; d.tone = 'bad'; render(false); return; }
+      d.tries++;
+      if (Math.abs(n - q.answer) <= q.tol) {
+        d.status = 'correct';
+        if (d.tries === 1) { good1(); award(50); } else { G.streak = 0; G.xp += d.tries === 2 ? 30 : 10; }
+        G.log.push({ concept: q.concept, company: cur().company, result: d.tries === 1 ? 'first' : d.tries === 2 ? 'second' : 'later' });
+      } else {
+        G.streak = 0;
+        const cash = d.offer.cash, eq = d.offer.eq;
+        if (Math.abs(n - cash / eq) <= q.tol) d.msg = `You divided by ${eq} instead of ${dec(eq)}. Convert the percent to a decimal first.`;
+        else if (Math.abs(n - cash * eq / 100) <= q.tol) d.msg = 'That is what your slice costs, not the whole company. The whole company is 100%.';
+        else if (n < cash) d.msg = 'That is less than your own investment, so it cannot be the whole company. Try again.';
+        else d.msg = 'Not quite. Set up the equation, then divide both sides.';
+        d.tone = 'bad';
+      }
+      render(false);
+    },
+    hintGate() { G.gate.hint = true; G.xp = Math.max(0, G.xp - 10); render(false); },
+    shake() {
+      const o = G.gate.offer, f = cur();
+      G.fund -= o.cash;
+      G.deals.push({ idx: f.round, cash: o.cash, eq: o.eq, val: offerVal(o) });
+      f.outcome = 'deal';
+      G.result = { type: 'deal', cash: o.cash, eq: o.eq, val: offerVal(o) };
+      go('result');
+    },
+    nextPitch() { G.i++; G.phase = 'enter'; startPitch(); render(true); },
+    finale() { go('finale'); },
+    tkTab(b) {
+      const t = b.dataset.tab;
+      $id('tab-calc').setAttribute('aria-selected', t === 'calc');
+      $id('tab-form').setAttribute('aria-selected', t === 'form');
+      $id('tk-calc').hidden = t !== 'calc';
+      $id('tk-form').hidden = t !== 'form';
+    },
+    calc() {
+      const v = calc($id('calc-in').value);
+      $id('calc-out').textContent = v === null ? 'Check your expression' : (Math.round(v * 1e6) / 1e6).toLocaleString('en-US');
+    }
+  };
+
+  function openGate(offer) {
+    G.gate = { q: gateQ(offer), offer: { cash: offer.cash, eq: offer.eq }, tries: 0, hint: false, status: 'open', msg: '', tone: '' };
+    go('gate');
+  }
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (b && A[b.dataset.act]) A[b.dataset.act](b);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const t = e.target.closest('[data-enter]');
+    if (t && A[t.dataset.enter]) { e.preventDefault(); A[t.dataset.enter](t); }
+  });
+  document.addEventListener('change', (e) => {
+    const t = e.target.closest('[data-change]');
+    if (t && A[t.dataset.change]) A[t.dataset.change](t);
+  });
+  $id('tk-btn').addEventListener('click', () => {
+    const tk = $id('tk'), open = tk.hidden;
+    tk.hidden = !open;
+    $id('tk-btn').setAttribute('aria-expanded', open);
+    if (open) $id('calc-in').focus({ preventScroll: true });
+  });
+
+  window.AlgebraTank = { get G() { return G; }, makeFounder, buildQ, gateQ, TPL, parseNum, calc, A };
+  render(false);
+})();
+</script>
+
+</body>
+</html>
