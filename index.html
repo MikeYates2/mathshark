@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Algebra Tank</title>
+<title>Math Shark</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
@@ -232,7 +232,7 @@ h3.sect { font: 800 26px/1 var(--display); text-transform: uppercase; letter-spa
 
 <div class="app">
   <header class="hud" id="hud">
-    <div class="brand"><svg width="30" height="22" viewBox="0 0 84 60" aria-hidden="true"><path d="M2 58 C 30 52 40 22 50 2 C 54 26 68 46 82 58 Z" fill="#f2b84b"/></svg><span>Algebra <b>Tank</b></span></div>
+    <div class="brand"><svg width="30" height="22" viewBox="0 0 84 60" aria-hidden="true"><path d="M2 58 C 30 52 40 22 50 2 C 54 26 68 46 82 58 Z" fill="#f2b84b"/></svg><span>Math <b>Shark</b></span></div>
     <div class="stats" id="stats"></div>
   </header>
   <main id="screen"></main>
@@ -594,7 +594,7 @@ h3.sect { font: 800 26px/1 var(--display); text-transform: uppercase; letter-spa
     try { const b = JSON.parse(localStorage.getItem(BEST_KEY) || 'null'); if (b) best = `<p class="best">Best season: ${signed(b.profit)} profit · ${b.xp} XP</p>`; } catch (e) { /* storage unavailable */ }
     return `<section class="title">
       <p class="kicker">Algebra for investors</p>
-      <h1>Algebra<br><em>Tank</em></h1>
+      <h1>Math<br><em>Shark</em></h1>
       <p class="lede">You are the Shark. Founders pitch you ${ROUNDS} companies with a ${fmt(START_FUND)} fund on the line. Read the numbers, solve the math, and make offers worth taking. Pay too much and your stake sinks.</p>
       <div class="fin-wrap" aria-hidden="true"><svg class="fin" viewBox="0 0 84 60"><path d="M2 58 C 30 52 40 22 50 2 C 54 26 68 46 82 58 Z"/></svg></div>
       <ol class="steps">
